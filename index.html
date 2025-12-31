@@ -51,7 +51,7 @@ class Particle {
   update() {
     if(this.type==="rocket"){
       this.y += this.vy;
-      this.vy += 0.1; // trọng lực
+      this.vy += 0.1; // trọng lực nhẹ
       this.life--;
     } else {
       this.x += this.vx;
@@ -75,7 +75,7 @@ let particles = [];
 // ======================
 function explode(x, y, type="circle") {
   const color = `hsl(${rand(0,360)},100%,60%)`;
-  const count = 50 + Math.floor(rand(0,30));
+  const count = 60 + Math.floor(rand(0,40)); // nhiều hơn
   for(let i=0;i<count;i++){
     let angle=0, vx=0, vy=0;
     if(type==="circle"){
@@ -99,19 +99,22 @@ function explode(x, y, type="circle") {
 }
 
 // ======================
-// BẮN PHÁO HOA TỪ DƯỚI
+// BẮN PHÁO HOA DÀY ĐẶC
 // ======================
-function launchFirework() {
-  const x = rand(W*0.2, W*0.8);
-  const y = H + 50;
-  const peakY = rand(H*0.2, H*0.6);
-  const typeArray = ["circle","star","heart"];
-  const type = typeArray[Math.floor(rand(0,typeArray.length))];
+function launchFireworksDense() {
+  const rocketsPerFrame = 3; // nhiều rocket mỗi lần
+  for(let j=0;j<rocketsPerFrame;j++){
+    const x = rand(W*0.1, W*0.9);
+    const y = H + 50;
+    const peakY = rand(H*0.2, H*0.6);
+    const typeArray = ["circle","star","heart"];
+    const type = typeArray[Math.floor(rand(0,typeArray.length))];
 
-  const rocket = new Particle(x, y, 0, rand(-7,-10), `hsl(${rand(0,360)},100%,60%)`, 100, 3, "rocket");
-  rocket.peakY = peakY;
-  rocket.explodeType = type;
-  particles.push(rocket);
+    const rocket = new Particle(x, y, 0, rand(-7,-10), `hsl(${rand(0,360)},100%,60%)`, 100, 3, "rocket");
+    rocket.peakY = peakY;
+    rocket.explodeType = type;
+    particles.push(rocket);
+  }
 }
 
 // xử lý rocket đạt đỉnh → nổ
@@ -148,7 +151,7 @@ setTimeout(()=>{ createText("HAPPY NEW YEAR 2026", 0.28, W*0.085); }, 16500);
 // ======================
 // ANIMATE LOOP
 // ======================
-let fireworkInterval = setInterval(launchFirework, 800);
+let fireworkInterval = setInterval(launchFireworksDense, 400); // dày đặc hơn
 setTimeout(()=>{ clearInterval(fireworkInterval); }, 16500);
 
 function animate(){
