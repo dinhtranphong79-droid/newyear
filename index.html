@@ -2,190 +2,25 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>🎆 Fireworks 2026</title>
+<title>🎆 Happy New Year 2026</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
   background: black;
-  height: 100%;
+  overflow: hidden;
 }
 
 canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-}
-
-#ui {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 10;
-  color: white;
-  font-family: monospace;
-  font-size: 20px;
+  display: block;
 }
 </style>
 </head>
-
 <body>
 
-<div id="ui" id="countdown">⏳</div>
 <canvas id="canvas"></canvas>
 
-<script>
-/* =========================
-   CANVAS
-========================= */
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener("resize", resize);
-
-/* =========================
-   FIREWORK ENGINE
-========================= */
-const GRAVITY = 0.05;
-const FRICTION = 0.98;
-let particles = [];
-
-function random(min, max) {
-  return Math.random() * (max - min) + min;
-}
-
-function createParticle(x, y, vx, vy, color) {
-  particles.push({ x, y, vx, vy, life: 120, color });
-}
-
-function explode(x, y, strength = 4) {
-  const count = 80;
-  for (let i = 0; i < count; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const s = Math.random() * strength;
-    createParticle(x, y, Math.cos(a)*s, Math.sin(a)*s,
-      `hsl(${Math.random()*360},100%,60%)`);
-  }
-}
-
-function update() {
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  particles.forEach(p => {
-    p.vx *= FRICTION;
-    p.vy = p.vy * FRICTION + GRAVITY;
-    p.x += p.vx;
-    p.y += p.vy;
-    p.life--;
-
-    ctx.globalAlpha = p.life / 120;
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 2, 0, Math.PI*2);
-    ctx.fill();
-  });
-
-  particles = particles.filter(p => p.life > 0);
-  requestAnimationFrame(update);
-}
-update();
-
-/* =========================
-   TEXT FIREWORK
-========================= */
-function fireText(text) {
-  const off = document.createElement("canvas");
-  const octx = off.getContext("2d");
-
-  off.width = canvas.width;
-  off.height = canvas.height;
-
-  octx.fillStyle = "white";
-  octx.textAlign = "center";
-  octx.textBaseline = "middle";
-  octx.font = "bold 96px Arial";
-
-  octx.fillText(text, off.width / 2, off.height / 2);
-
-  const img = octx.getImageData(0, 0, off.width, off.height).data;
-
-  for (let y = 0; y < off.height; y += 6) {
-    for (let x = 0; x < off.width; x += 6) {
-      const i = (y * off.width + x) * 4;
-      if (img[i] > 200) {
-        createParticle(
-          x, y,
-          random(-2,2),
-          random(-2,2),
-          `hsl(${Math.random()*360},100%,60%)`
-        );
-      }
-    }
-  }
-}
-
-/* =========================
-   AUTO FIRE
-========================= */
-let autoRate = 0.01;
-setInterval(() => {
-  if (Math.random() < autoRate) {
-    explode(
-      Math.random() * canvas.width,
-      Math.random() * canvas.height * 0.5
-    );
-  }
-}, 120);
-
-/* =========================
-   COUNTDOWN
-========================= */
-const ui = document.getElementById("ui");
-let celebrated = false;
-
-const target = new Date("2026-01-01T00:00:00+07:00").getTime();
-
-function tick() {
-  const now = Date.now();
-  let diff = Math.floor((target - now) / 1000);
-
-  if (diff <= 0) {
-    ui.textContent = "🎆 HAPPY NEW YEAR 2026";
-
-    if (!celebrated) {
-      celebrated = true;
-      autoRate = 0.06;
-
-      fireText("HAPPY");
-      setTimeout(() => fireText("NEW YEAR"), 1200);
-      setTimeout(() => fireText("2026"), 2400);
-    }
-    return;
-  }
-
-  const h = String(Math.floor(diff / 3600)).padStart(2,"0");
-  const m = String(Math.floor(diff % 3600 / 60)).padStart(2,"0");
-  const s = String(diff % 60).padStart(2,"0");
-  ui.textContent = `⏳ ${h}:${m}:${s}`;
-}
-
-setInterval(tick, 1000);
-tick();
-
-/* =========================
-   CLICK
-========================= */
-canvas.addEventListener("click", e => explode(e.clientX, e.clientY));
-</script>
-
+<script src="fireworks.js"></script>
 </body>
 </html>
