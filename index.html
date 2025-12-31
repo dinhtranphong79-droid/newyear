@@ -37,36 +37,22 @@ window.addEventListener("resize", resize);
 const rand = (a,b)=>Math.random()*(b-a)+a;
 
 class Particle {
-  constructor(x, y, tx, ty, color, type="text") {
+  constructor(x, y, vx, vy, color, life=50, size=2) {
     this.x = x;
     this.y = y;
-    this.tx = tx;
-    this.ty = ty;
-    this.vx = rand(-2,2);
-    this.vy = rand(-12,-9);
-    this.life = 0;
+    this.vx = vx;
+    this.vy = vy;
     this.color = color;
-    this.type = type;
-    this.size = 2;
+    this.life = life;
+    this.size = size;
   }
 
   update() {
-    this.life++;
-    if(this.type === "text") {
-      if(this.life < 30) {
-        this.y += this.vy;
-        this.vx *= 0.98;
-        this.vy += 0.2;
-      } else {
-        this.x += (this.tx - this.x)*0.08;
-        this.y += (this.ty - this.y)*0.08;
-      }
-    } else if(this.type === "spark") {
-      this.x += this.vx;
-      this.y += this.vy;
-      this.vy += 0.1;
-      this.size *= 0.95;
-    }
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += 0.05; // trọng lực nhẹ
+    this.size *= 0.96; // co dần
+    this.life--;
   }
 
   draw() {
@@ -77,6 +63,60 @@ class Particle {
 
 let particles = [];
 
+// ======================
+// PHÁO HOA HÌNH DẠNG
+// ======================
+function explode(x, y, type="circle") {
+  const color = `hsl(${rand(0,360)},100%,60%)`;
+  const count = 50 + Math.floor(rand(0,30));
+
+  for(let i=0;i<count;i++){
+    let angle = 0, vx=0, vy=0;
+    if(type==="circle"){
+      angle = (i/count)*Math.PI*2;
+      vx = Math.cos(angle)*rand(2,6);
+      vy = Math.sin(angle)*rand(2,6);
+    } else if(type==="star"){
+      angle = (i%5)*(Math.PI*2/5) + Math.random()*0.5;
+      let r = rand(3,6);
+      vx = Math.cos(angle)*r;
+      vy = Math.sin(angle)*r;
+    } else if(type==="heart"){
+      let t = (i/count)*2*Math.PI;
+      vx = 8*(16*Math.pow(Math.sin(t),3))/50;
+      vy = -8*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))/50;
+      vx += rand(-0.5,0.5);
+      vy += rand(-0.5,0.5);
+    }
+    particles.push(new Particle(x, y, vx, vy, color, 50+Math.floor(rand(0,30)), 2+rand(0,2)));
+  }
+}
+
+// ======================
+// PHÁO HOA BAN ĐẦU
+// ======================
+function launchFirework() {
+  const x = rand(W*0.2, W*0.8);
+  const y = H + 50;
+  const typeArray = ["circle","star","heart"];
+  const type = typeArray[Math.floor(rand(0,typeArray.length))];
+  const peakY = rand(H*0.3,H*0.6);
+
+  // particle bay lên
+  const p = new Particle(x, y, 0, rand(-7,-10), `hsl(${rand(0,360)},100%,60%)`, 100, 3);
+  particles.push(p);
+
+  // nổ tại đỉnh
+  setTimeout(()=>{
+    explode(x, peakY, type);
+  }, 700 + rand(0,400));
+}
+
+let fireworkInterval = setInterval(launchFirework, 800);
+
+// ======================
+// CHỮ “HAPPY NEW YEAR 2026”
+// ======================
 function createTextFirework(text, yRatio, size) {
   const off = document.createElement("canvas");
   const octx = off.getContext("2d");
@@ -95,47 +135,18 @@ function createTextFirework(text, yRatio, size) {
     for(let x=0; x<W; x+=6){
       const i = (y*W + x)*4;
       if(img[i+3] > 150){
-        particles.push(new Particle(
-          x,
-          H + rand(50,200),
-          x,
-          y,
-          `hsl(${rand(0,360)},100%,60%)`
-        ));
+        // bắn từ dưới lên
+        const color = `hsl(${rand(0,360)},100%,60%)`;
+        const p = new Particle(x, H+rand(50,200), 0, rand(-12,-9), color, 60, 2);
+        particles.push(p);
+        // tạo sparkle khi đến vị trí
+        setTimeout(()=>explode(x, y, "circle"), 500);
       }
     }
   }
 }
 
-function createSparks(x, y, color) {
-  for(let i=0;i<20;i++){
-    let p = new Particle(x, y, x, y, color, "spark");
-    p.vx = rand(-4,4);
-    p.vy = rand(-4,4);
-    p.size = rand(1,3);
-    particles.push(p);
-  }
-}
-
-// ======================
-// PHÁO HOA BAN ĐẦU
-// ======================
-function launchFirework() {
-  const x = rand(W*0.2, W*0.8);
-  const y = H + 50;
-  const color = `hsl(${rand(0,360)},100%,60%)`;
-  // tạo 1 particle bay lên nổ
-  const p = new Particle(x, y, x, rand(H*0.3, H*0.6), color, "text");
-  particles.push(p);
-  setTimeout(()=>{
-    createSparks(p.tx, p.ty, color);
-  }, 800 + rand(0,400)); // nổ khi bay lên
-}
-
-// Lặp phóng pháo hoa ban đầu
-let fireworkInterval = setInterval(launchFirework, 800);
-
-// Chữ xuất hiện sau 15s
+// chữ xuất hiện sau 15 giây
 setTimeout(()=>{
   createTextFirework("HAPPY NEW YEAR", 0.28, W*0.085);
 }, 15000);
@@ -144,11 +155,14 @@ setTimeout(()=>{
   createTextFirework("2026", 0.42, W*0.2);
 }, 16500);
 
-// Ngừng phóng pháo hoa ban đầu sau khi chữ xuất hiện
+// dừng pháo hoa ban đầu sau khi chữ xuất hiện
 setTimeout(()=>{
   clearInterval(fireworkInterval);
 }, 16500);
 
+// ======================
+// ANIMATE LOOP
+// ======================
 function animate() {
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.fillRect(0,0,W,H);
@@ -156,12 +170,9 @@ function animate() {
   particles.forEach(p=>{
     p.update();
     p.draw();
-    if(p.type==="text" && p.life===30){
-      createSparks(p.tx, p.ty, p.color);
-    }
   });
 
-  particles = particles.filter(p=>p.size>0.5);
+  particles = particles.filter(p=>p.size>0.5 && p.life>0);
   requestAnimationFrame(animate);
 }
 animate();
