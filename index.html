@@ -11,7 +11,11 @@ html,body{
   background:black;
   overflow:hidden;
 }
-canvas{display:block;}
+canvas{
+  position:absolute;
+  inset:0;
+  margin:auto;
+}
 </style>
 </head>
 <body>
@@ -22,28 +26,45 @@ canvas{display:block;}
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
+/* ========= 9:16 LOGIC ========= */
+let W=720, H=1280, scale=1;
+
 function resize(){
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+  const sw=innerWidth, sh=innerHeight;
+  const ratio=9/16;
+
+  if(sw/sh > ratio){
+    H=sh;
+    W=H*ratio;
+  }else{
+    W=sw;
+    H=W/ratio;
+  }
+
+  scale=W/720;
+  canvas.width=W;
+  canvas.height=H;
+  canvas.style.width=W+"px";
+  canvas.style.height=H+"px";
 }
 resize();
 addEventListener("resize",resize);
 
-/* ============ UTILS ============ */
+/* ========= UTILS ========= */
 const rand=(a,b)=>Math.random()*(b-a)+a;
 const color=()=>`hsl(${rand(0,360)},100%,60%)`;
 
-/* ============ FIREWORKS ============ */
+/* ========= FIREWORKS ========= */
 let fireworks=[];
-let intensity=0.012;
+let intensity=0.015;
 
 function launch(){
   fireworks.push({
-    x:rand(canvas.width*0.1,canvas.width*0.9),
-    y:canvas.height+20,
-    vx:rand(-1.2,1.2),
-    vy:-rand(12,18),
-    g:0.35,
+    x:rand(W*0.15,W*0.85),
+    y:H+20,
+    vx:rand(-1,1)*scale,
+    vy:-rand(14,20)*scale,
+    g:0.45*scale,
     exploded:false,
     type:Math.floor(rand(0,6)),
     parts:[]
@@ -51,41 +72,17 @@ function launch(){
 }
 
 function explode(f){
-  let count=Math.floor(rand(80,180));
-  for(let i=0;i<count;i++){
-    let a,s,vx,vy;
-    switch(f.type){
-      case 0: // circle
-        a=Math.random()*Math.PI*2;
-        s=rand(2,6);
-        vx=Math.cos(a)*s; vy=Math.sin(a)*s;
-        break;
-      case 1: // star
-        a=(Math.PI*2/5)*(i%5);
-        s=rand(3,6);
-        vx=Math.cos(a)*s; vy=Math.sin(a)*s;
-        break;
-      case 2: // spiral
-        a=i*0.3; s=i*0.04;
-        vx=Math.cos(a)*s; vy=Math.sin(a)*s;
-        break;
-      case 3: // rain
-        a=Math.PI/2+rand(-0.3,0.3);
-        s=rand(3,8);
-        vx=Math.cos(a)*s; vy=Math.sin(a)*s;
-        break;
-      case 4: // flower
-        a=Math.random()*Math.PI*2;
-        s=rand(2,5)*(Math.sin(a*4));
-        vx=Math.cos(a)*s; vy=Math.sin(a)*s;
-        break;
-      case 5: // double burst
-        a=Math.random()*Math.PI*2;
-        s=rand(2,7);
-        vx=Math.cos(a)*s; vy=Math.sin(a)*s;
-        break;
-    }
-    f.parts.push({x:f.x,y:f.y,vx,vy,life:rand(60,110),c:color()});
+  let n=rand(90,180);
+  for(let i=0;i<n;i++){
+    let a=Math.random()*Math.PI*2;
+    let s=rand(2,6)*scale;
+    f.parts.push({
+      x:f.x,y:f.y,
+      vx:Math.cos(a)*s,
+      vy:Math.sin(a)*s,
+      life:rand(60,110),
+      c:color()
+    });
   }
   f.exploded=true;
 }
@@ -97,12 +94,12 @@ function updateFireworks(){
       f.x+=f.vx;
       f.y+=f.vy;
       f.vy+=f.g;
-      if(f.vy>=-2) explode(f);
+      if(f.vy>=-2*scale) explode(f);
     }else{
       f.parts.forEach(p=>{
         p.x+=p.vx;
         p.y+=p.vy;
-        p.vy+=0.05;
+        p.vy+=0.06*scale;
         p.life--;
       });
       f.parts=f.parts.filter(p=>p.life>0);
@@ -115,36 +112,37 @@ function drawFireworks(){
   fireworks.forEach(f=>{
     f.parts.forEach(p=>{
       ctx.fillStyle=p.c;
-      ctx.fillRect(p.x,p.y,2,2);
+      ctx.fillRect(p.x,p.y,2*scale,2*scale);
     });
   });
 }
 
-/* ============ TEXT ============ */
+/* ========= TEXT ========= */
 let showText=false;
 let textParts=[];
 
 function createText(){
   textParts=[];
   const off=document.createElement("canvas");
+  off.width=W;
+  off.height=H;
   const o=off.getContext("2d");
-  off.width=canvas.width;
-  off.height=canvas.height;
 
-  let fontSize=Math.min(canvas.width*0.1,canvas.height*0.18);
-  o.font=`bold ${fontSize}px Arial`;
+  let fontSize=W*0.12;
+  o.font=`900 ${fontSize}px Arial`;
   o.textAlign="center";
   o.textBaseline="middle";
   o.fillStyle="white";
-  o.fillText("HAPPY NEW YEAR 2026",canvas.width/2,canvas.height/2);
+  o.fillText("HAPPY NEW YEAR",W/2,H/2-60*scale);
+  o.fillText("2026",W/2,H/2+60*scale);
 
-  let d=o.getImageData(0,0,off.width,off.height).data;
-  for(let y=0;y<off.height;y+=6){
-    for(let x=0;x<off.width;x+=6){
-      if(d[(y*off.width+x)*4+3]>150){
+  let d=o.getImageData(0,0,W,H).data;
+  for(let y=0;y<H;y+=6){
+    for(let x=0;x<W;x+=6){
+      if(d[(y*W+x)*4+3]>150){
         textParts.push({
-          x:rand(0,canvas.width),
-          y:canvas.height+rand(50,400),
+          x:rand(0,W),
+          y:H+rand(80,400),
           tx:x,ty:y,
           vx:0,vy:0,
           c:color()
@@ -156,21 +154,21 @@ function createText(){
 
 function updateText(){
   textParts.forEach(p=>{
-    p.vx+=(p.tx-p.x)*0.02;
-    p.vy+=(p.ty-p.y)*0.02;
-    p.vx*=0.85; p.vy*=0.85;
+    p.vx+=(p.tx-p.x)*0.03;
+    p.vy+=(p.ty-p.y)*0.03;
+    p.vx*=0.8; p.vy*=0.8;
     p.x+=p.vx; p.y+=p.vy;
     ctx.fillStyle=p.c;
-    ctx.fillRect(p.x,p.y,2,2);
+    ctx.fillRect(p.x,p.y,2*scale,2*scale);
   });
 }
 
-/* ============ LOOP ============ */
+/* ========= LOOP ========= */
 function animate(){
-  ctx.fillStyle="rgba(0,0,0,0.25)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="rgba(0,0,0,0.28)";
+  ctx.fillRect(0,0,W,H);
 
-  intensity=Math.min(intensity+0.00002,0.09);
+  intensity=Math.min(intensity+0.00002,0.08);
   if(Math.random()<intensity) launch();
 
   updateFireworks();
@@ -181,7 +179,7 @@ function animate(){
 }
 animate();
 
-/* ⏱ 15s xuất hiện chữ */
+/* ⏱ 15s hiện chữ */
 setTimeout(()=>{
   showText=true;
   createText();
