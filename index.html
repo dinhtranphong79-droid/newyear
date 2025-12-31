@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Happy New Year 2026</title>
 <style>
-html, body { margin:0; padding:0; background:black; overflow:hidden; }
-canvas { display:block; width:100%; height:100%; }
+  html, body { margin:0; padding:0; background:black; overflow:hidden; }
+  canvas { display:block; width:100%; height:100%; }
 </style>
 </head>
 <body>
@@ -44,7 +44,7 @@ class Particle{
       this.vy += 0.15;
       if(this.y<=this.ty){ // nổ
         explodeCircle(this.x,this.y);
-        this.life=200; // đánh dấu xóa
+        this.life=200; // xóa rocket
       }
     } else if(this.type==="spark"){
       this.x += this.vx;
@@ -62,36 +62,35 @@ class Particle{
   }
 }
 
-let particles=[];
-
 // ======================
-// NỔ PHÁO HOA HÌNH TRÒN
+// NỔ HÌNH TRÒN
 // ======================
 function explodeCircle(x,y){
-  const count = 60 + Math.floor(rand(0,20));
+  const count = 80; // số particle
   for(let i=0;i<count;i++){
-    const angle=(i/count)*Math.PI*2;
-    const vx = Math.cos(angle)*rand(2,6);
-    const vy = Math.sin(angle)*rand(2,6);
+    const angle = (i/count)*Math.PI*2;
+    const speed = rand(2,6);
+    const vx = Math.cos(angle)*speed;
+    const vy = Math.sin(angle)*speed;
     particles.push(new Particle(x,y,x+vx,y+vy,`hsl(${rand(0,360)},100%,60%)`,"spark"));
   }
 }
 
 // ======================
-// BẮN PHÁO HOA DÀY ĐẶC
+// BẮN ROCKET
 // ======================
 function launchRockets(){
   const rocketCount=6;
   for(let i=0;i<rocketCount;i++){
-    const x=rand(W*0.1,W*0.9);
-    const y=H+50;
-    const peakY=rand(H*0.2,H*0.6);
+    const x = rand(W*0.1,W*0.9);
+    const y = H + 50;
+    const peakY = rand(H*0.2,H*0.6);
     particles.push(new Particle(x,y,x,peakY,`hsl(${rand(0,360)},100%,60%)`,"rocket"));
   }
 }
 
 // ======================
-// TẠO CHỮ 2 HÀNG TỪ PHÁO HOA
+// CHỮ 2 HÀNG TỪ PHÁO HOA
 // ======================
 function createTextParticles(text,yRatio,size){
   const off = document.createElement("canvas");
@@ -130,9 +129,9 @@ function animate(){
 animate();
 
 // ======================
-// LẬP LẠI ROCKET BAN ĐẦU DÀY ĐẶC
+// LẬP LẠI ROCKET BAN ĐẦU
 // ======================
-let rocketInterval=setInterval(launchRockets,300);
+let rocketInterval = setInterval(launchRockets,300);
 setTimeout(()=>{ clearInterval(rocketInterval); },15000);
 
 // ======================
@@ -142,6 +141,5 @@ setTimeout(()=>{ createTextParticles("HAPPY NEW YEAR",0.28,W*0.08); },15000);
 setTimeout(()=>{ createTextParticles("2026",0.42,W*0.2); },16500);
 
 </script>
-
 </body>
 </html>
