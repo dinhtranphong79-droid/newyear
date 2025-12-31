@@ -59,14 +59,12 @@ class Particle{
   }
 }
 
-let particles=[];
-
 // ======================
-// NỔ HÌNH TRÒN RẤT LỚN
+// NỔ PHÁO HOA HÌNH TRÒN LỚN
 // ======================
 function explodeCircle(x, y){
-    const count = 400; // rất nhiều particle
-    const radius = rand(250,350); // bán kính cực lớn
+    const count = 400; // nhiều particle
+    const radius = rand(250,350); // bán kính lớn
     for(let i=0;i<count;i++){
         const angle=(i/count)*Math.PI*2;
         const speed = rand(radius/12,radius/10);
@@ -80,14 +78,14 @@ function explodeCircle(x, y){
 }
 
 // ======================
-// BẮN PHÁO HOA (chỉ nổ)
+// BẮN PHÁO HOA (chỉ nổ, không bay)
 // ======================
 function launchFireworkInstant(){
   const rocketCount = 6;
   for(let i=0;i<rocketCount;i++){
     const x = rand(W*0.1,W*0.9);
-    const y = rand(H*0.15,H*0.5); // nổ cao
-    explodeCircle(x,y);
+    const y = rand(H*0.15,H*0.5); // nổ ngay vị trí cao
+    explodeCircle(x,y); // nổ ngay
   }
 }
 
@@ -120,6 +118,7 @@ function createTextParticles(text,yRatio,size){
 // ======================
 // ANIMATE LOOP
 // ======================
+let particles=[];
 function animate(){
   ctx.fillStyle="rgba(0,0,0,0.25)";
   ctx.fillRect(0,0,W,H);
