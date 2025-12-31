@@ -117,6 +117,24 @@ function createSparks(x, y, color) {
   }
 }
 
+// ======================
+// PHÁO HOA BAN ĐẦU
+// ======================
+function launchFirework() {
+  const x = rand(W*0.2, W*0.8);
+  const y = H + 50;
+  const color = `hsl(${rand(0,360)},100%,60%)`;
+  // tạo 1 particle bay lên nổ
+  const p = new Particle(x, y, x, rand(H*0.3, H*0.6), color, "text");
+  particles.push(p);
+  setTimeout(()=>{
+    createSparks(p.tx, p.ty, color);
+  }, 800 + rand(0,400)); // nổ khi bay lên
+}
+
+// Lặp phóng pháo hoa ban đầu
+let fireworkInterval = setInterval(launchFirework, 800);
+
 // Chữ xuất hiện sau 15s
 setTimeout(()=>{
   createTextFirework("HAPPY NEW YEAR", 0.28, W*0.085);
@@ -124,6 +142,11 @@ setTimeout(()=>{
 
 setTimeout(()=>{
   createTextFirework("2026", 0.42, W*0.2);
+}, 16500);
+
+// Ngừng phóng pháo hoa ban đầu sau khi chữ xuất hiện
+setTimeout(()=>{
+  clearInterval(fireworkInterval);
 }, 16500);
 
 function animate() {
