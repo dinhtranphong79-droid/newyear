@@ -73,16 +73,16 @@ let particles=[];
 // NỔ HÌNH TRÒN NHIỀU VÒNG
 // ======================
 function explodeCircle(x, y){
-    const count = 80; // số particle
-    const radius = rand(50,80); // bán kính
-    for(let i=0; i<count; i++){
-        const angle = (i / count) * Math.PI * 2; // chia đều 360 độ
-        const speed = radius / 15; // vận tốc đều để tròn
-        const vx = Math.cos(angle) * speed;
-        const vy = Math.sin(angle) * speed;
-        particles.push(new Particle(x, y, x+vx*10, y+vy*10, `hsl(${rand(0,360)},100%,60%)`, "spark", 1));
+    const count = 120; // số particle
+    const radius = rand(60,90);
+    for(let i=0;i<count;i++){
+        const angle = (i/count)*Math.PI*2; // chia đều 360 độ
+        const vx = Math.cos(angle) * rand(3,6);
+        const vy = Math.sin(angle) * rand(3,6);
+        particles.push(new Particle(x,y,x+vx*10,y+vy*10,`hsl(${rand(0,360)},100%,60%)`,"spark",1));
     }
 }
+
 
 
 
