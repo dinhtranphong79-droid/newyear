@@ -13,6 +13,8 @@ html, body {
 }
 canvas {
   display: block;
+  width: 100%;
+  height: 100%;
 }
 </style>
 </head>
@@ -32,14 +34,8 @@ function resize() {
 resize();
 window.addEventListener("resize", resize);
 
-/* =======================
-   UTIL
-======================= */
 const rand = (a,b)=>Math.random()*(b-a)+a;
 
-/* =======================
-   PARTICLE
-======================= */
 class Particle {
   constructor(x, y, tx, ty, color, type="text") {
     this.x = x;
@@ -56,23 +52,20 @@ class Particle {
 
   update() {
     this.life++;
-    if (this.type === "text") {
-      if (this.life < 30) {
-        // bay lên
+    if(this.type === "text") {
+      if(this.life < 30) {
         this.y += this.vy;
         this.vx *= 0.98;
-        this.vy += 0.2; // trọng lực nhẹ
+        this.vy += 0.2;
       } else {
-        // hút về chữ
-        this.x += (this.tx - this.x) * 0.08;
-        this.y += (this.ty - this.y) * 0.08;
+        this.x += (this.tx - this.x)*0.08;
+        this.y += (this.ty - this.y)*0.08;
       }
-    } else if (this.type === "spark") {
-      // ánh sáng tỏa ra
+    } else if(this.type === "spark") {
       this.x += this.vx;
       this.y += this.vy;
-      this.vy += 0.1; // trọng lực
-      this.size *= 0.95; // co dần
+      this.vy += 0.1;
+      this.size *= 0.95;
     }
   }
 
@@ -84,13 +77,9 @@ class Particle {
 
 let particles = [];
 
-/* =======================
-   CREATE TEXT FIREWORK
-======================= */
 function createTextFirework(text, yRatio, size) {
   const off = document.createElement("canvas");
   const octx = off.getContext("2d");
-
   off.width = W;
   off.height = H;
 
@@ -98,77 +87,58 @@ function createTextFirework(text, yRatio, size) {
   octx.textAlign = "center";
   octx.textBaseline = "middle";
   octx.font = `900 ${size}px Arial`;
-  octx.fillText(text, W / 2, H * yRatio);
+  octx.fillText(text, W/2, H*yRatio);
 
   const img = octx.getImageData(0,0,W,H).data;
 
-  for (let y = 0; y < H; y += 6) {
-    for (let x = 0; x < W; x += 6) {
-      const i = (y * W + x) * 4;
-      if (img[i+3] > 150) {
-        particles.push(
-          new Particle(
-            x,
-            H + rand(50,200), // bắn từ dưới lên
-            x,
-            y,
-            `hsl(${rand(0,360)},100%,60%)`
-          )
-        );
+  for(let y=0; y<H; y+=6){
+    for(let x=0; x<W; x+=6){
+      const i = (y*W + x)*4;
+      if(img[i+3] > 150){
+        particles.push(new Particle(
+          x,
+          H + rand(50,200),
+          x,
+          y,
+          `hsl(${rand(0,360)},100%,60%)`
+        ));
       }
     }
   }
 }
 
-/* =======================
-   CREATE SPARKS EFFECT
-======================= */
 function createSparks(x, y, color) {
-  for(let i=0; i<20; i++){
-    particles.push(new Particle(
-      x, y,
-      x, y,
-      color,
-      "spark"
-    ));
-    let p = particles[particles.length-1];
+  for(let i=0;i<20;i++){
+    let p = new Particle(x, y, x, y, color, "spark");
     p.vx = rand(-4,4);
     p.vy = rand(-4,4);
     p.size = rand(1,3);
+    particles.push(p);
   }
 }
 
-/* =======================
-   START SEQUENCE
-======================= */
+// Chữ xuất hiện sau 15s
 setTimeout(()=>{
-  createTextFirework("HAPPY NEW YEAR", 0.28, W * 0.085);
-}, 15000); // 15s
+  createTextFirework("HAPPY NEW YEAR", 0.28, W*0.085);
+}, 15000);
 
 setTimeout(()=>{
-  createTextFirework("2026", 0.42, W * 0.2);
-}, 16500); // nối hiệu ứng
+  createTextFirework("2026", 0.42, W*0.2);
+}, 16500);
 
-/* =======================
-   LOOP
-======================= */
 function animate() {
   ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.fillRect(0,0,W,H);
 
-  particles.forEach((p,i)=>{
+  particles.forEach(p=>{
     p.update();
     p.draw();
-
-    // tạo sparkle khi particle gần target
-    if(p.type === "text" && p.life === 30){
+    if(p.type==="text" && p.life===30){
       createSparks(p.tx, p.ty, p.color);
     }
   });
 
-  // xóa các spark quá nhỏ
   particles = particles.filter(p=>p.size>0.5);
-
   requestAnimationFrame(animate);
 }
 animate();
