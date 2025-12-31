@@ -65,11 +65,11 @@ let particles=[];
 // NỔ HÌNH TRÒN RẤT LỚN
 // ======================
 function explodeCircle(x, y){
-    const count = 250; // nhiều particle hơn
-    const radius = rand(150,200); // bán kính lớn hơn
+    const count = 400; // rất nhiều particle
+    const radius = rand(250,350); // bán kính cực lớn
     for(let i=0;i<count;i++){
         const angle=(i/count)*Math.PI*2;
-        const speed = rand(radius/12,radius/8);
+        const speed = rand(radius/12,radius/10);
         const vx = Math.cos(angle)*speed;
         const vy = Math.sin(angle)*speed;
         let p = new Particle(x,y,`hsl(${rand(0,360)},100%,60%)`,"spark");
@@ -86,7 +86,7 @@ function launchFireworkInstant(){
   const rocketCount = 6;
   for(let i=0;i<rocketCount;i++){
     const x = rand(W*0.1,W*0.9);
-    const y = rand(H*0.2,H*0.5); // nổ cao
+    const y = rand(H*0.15,H*0.5); // nổ cao
     explodeCircle(x,y);
   }
 }
