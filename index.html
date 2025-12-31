@@ -18,38 +18,33 @@ const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
 let W, H;
-function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-}
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
 resize();
 window.addEventListener("resize", resize);
 
 const rand = (a,b)=>Math.random()*(b-a)+a;
 
 class Particle {
-  constructor(x, y, vx, vy, color, life=50, size=2, type="spark") {
+  constructor(x, y, tx, ty, color, life=50, size=2, type="spark") {
     this.x = x; this.y = y;
-    this.vx = vx; this.vy = vy;
+    this.tx = tx; this.ty = ty;
+    this.vx = rand(-2,2);
+    this.vy = rand(-12,-9);
     this.color = color;
     this.life = life;
     this.size = size;
-    this.type = type; // "rocket" | "spark"
+    this.type = type; // "spark" | "rocket"
   }
   update() {
-    if(this.type==="rocket"){
+    if(this.life < 30){
       this.y += this.vy;
-      this.vy += 0.1; // trọng lực nhẹ
-      this.life--;
     } else {
-      this.x += this.vx;
-      this.y += this.vy;
-      this.vy += 0.05;
-      this.size *= 0.96;
-      this.life--;
+      this.x += (this.tx - this.x)*0.08;
+      this.y += (this.ty - this.y)*0.08;
     }
+    this.life++;
   }
-  draw(ctx) {
+  draw(ctx){
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x, this.y, this.size, this.size);
   }
@@ -58,103 +53,93 @@ class Particle {
 let particles = [];
 
 // ======================
-// NỔ PHÁO HOA HÌNH DẠNG
+// PHÁO HOA BAN ĐẦU DÀY ĐẶC
 // ======================
-function explode(x, y, type="circle") {
-  const color = `hsl(${rand(0,360)},100%,60%)`;
-  const count = 60 + Math.floor(rand(0,40));
-  for(let i=0;i<count;i++){
-    let angle=0, vx=0, vy=0;
-    if(type==="circle"){
-      angle = (i/count)*Math.PI*2;
-      vx = Math.cos(angle)*rand(2,6);
-      vy = Math.sin(angle)*rand(2,6);
-    } else if(type==="star"){
-      angle = (i%5)*(Math.PI*2/5) + Math.random()*0.5;
-      let r = rand(3,6);
-      vx = Math.cos(angle)*r;
-      vy = Math.sin(angle)*r;
-    }
-    particles.push(new Particle(x, y, vx, vy, color, 50+Math.floor(rand(0,30)), 2+rand(0,2), "spark"));
+function launchInitialFireworks() {
+  const rocketCount = 6; // nhiều rocket hơn
+  for(let i=0;i<rocketCount;i++){
+    const x = rand(W*0.1, W*0.9);
+    const y = H + 50;
+    const peakY = rand(H*0.2, H*0.6);
+    const typeArray = ["circle","star"];
+    const type = typeArray[Math.floor(rand(0,typeArray.length))];
+    const rocket = {x,y,vy:rand(-7,-10),peakY,type,color:`hsl(${rand(0,360)},100%,60%)`};
+    particles.push(rocket);
   }
 }
 
 // ======================
-// BẮN NHIỀU LỚP ROCKET
+// TẠO CHỮ TỪ PHÁO HOA
 // ======================
-function launchFireworkLayer() {
-  const layerCount = 3; // 3 lớp rocket
-  for(let l=0;l<layerCount;l++){
-    const rocketsPerLayer = 2; // 2 rocket mỗi lớp
-    for(let j=0;j<rocketsPerLayer;j++){
-      const x = rand(W*0.1, W*0.9);
-      const y = H + 50 + l*20; // lớp khác nhau
-      const peakY = rand(H*0.2, H*0.6);
-      const typeArray = ["circle","star"];
-      const type = typeArray[Math.floor(rand(0,typeArray.length))];
-      const rocket = new Particle(x, y, 0, rand(-7,-10), `hsl(${rand(0,360)},100%,60%)`, 100, 3, "rocket");
-      rocket.peakY = peakY;
-      rocket.explodeType = type;
-      particles.push(rocket);
+function createTextParticles(text, yRatio, size) {
+  const off = document.createElement("canvas");
+  const octx = off.getContext("2d");
+  off.width = W; off.height = H;
+
+  octx.fillStyle = "#fff";
+  octx.textAlign = "center";
+  octx.textBaseline = "middle";
+  octx.font = `900 ${size}px Arial`;
+  octx.fillText(text, W/2, H*yRatio);
+
+  const img = octx.getImageData(0,0,W,H).data;
+
+  for(let y=0; y<H; y+=6){
+    for(let x=0; x<W; x+=6){
+      const i = (y*W + x)*4;
+      if(img[i+3] > 150){
+        particles.push(new Particle(x,H+rand(50,200),x,y,`hsl(${rand(0,360)},100%,60%)`));
+      }
     }
   }
 }
-
-// xử lý rocket đạt đỉnh → nổ
-function handleRockets() {
-  particles.forEach(p=>{
-    if(p.type==="rocket" && p.y <= p.peakY){
-      explode(p.x, p.y, p.explodeType);
-      p.life = 0;
-    }
-  });
-}
-
-// ======================
-// CHỮ HAPPY NEW YEAR 2026 GIỮ NGUYÊN
-// ======================
-let textCanvas = document.createElement("canvas");
-let textCtx = textCanvas.getContext("2d");
-textCanvas.width = W; textCanvas.height = H;
-
-function createText(text, yRatio, size){
-  textCtx.clearRect(0,0,W,H);
-  textCtx.fillStyle = "white";
-  textCtx.textAlign = "center";
-  textCtx.textBaseline = "middle";
-  textCtx.font = `900 ${size}px Arial`;
-  textCtx.fillText(text, W/2, H*yRatio);
-}
-
-// xuất hiện sau 15s
-setTimeout(()=>{ createText("HAPPY NEW YEAR", 0.28, W*0.085); }, 15000);
-setTimeout(()=>{ createText("HAPPY NEW YEAR 2026", 0.28, W*0.085); }, 16500);
 
 // ======================
 // ANIMATE LOOP
 // ======================
-let fireworkInterval = setInterval(launchFireworkLayer, 400); // dày đặc
-setTimeout(()=>{ clearInterval(fireworkInterval); }, 16500);
-
-function animate(){
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
+function animate() {
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.fillRect(0,0,W,H);
 
-  // vẽ chữ cố định
-  ctx.drawImage(textCanvas,0,0);
-
-  handleRockets();
-
-  particles.forEach(p=>{
-    p.update();
-    p.draw(ctx);
-  });
-
-  particles = particles.filter(p=>p.life>0 && p.size>0.5);
+  // xử lý rocket ban đầu
+  for(let i=0;i<particles.length;i++){
+    const p = particles[i];
+    if(p.type==="rocket"){
+      p.y += p.vy;
+      p.vy += 0.15;
+      if(p.y <= p.peakY){
+        // nổ ra nhiều hình dạng
+        const count = 60 + Math.floor(rand(0,20));
+        for(let j=0;j<count;j++){
+          const angle = (j/count)*Math.PI*2;
+          const vx = Math.cos(angle)*rand(2,6);
+          const vy = Math.sin(angle)*rand(2,6);
+          particles.push(new Particle(p.x,p.y,p.x+vx,p.y+vy,`hsl(${rand(0,360)},100%,60%)`));
+        }
+        particles.splice(i,1);
+        i--;
+      }
+    } else {
+      p.update();
+      p.draw(ctx);
+    }
+  }
 
   requestAnimationFrame(animate);
 }
 animate();
+
+// ======================
+// KHỞI ĐỘNG PHÁO HOA BAN ĐẦU
+// ======================
+let initialInterval = setInterval(launchInitialFireworks, 400);
+setTimeout(()=>{ clearInterval(initialInterval); }, 15000);
+
+// ======================
+// BẮN CHỮ
+// ======================
+setTimeout(()=>{ createTextParticles("HAPPY NEW YEAR",0.28,W*0.08); },15000);
+setTimeout(()=>{ createTextParticles("2026",0.42,W*0.2); },16500);
 </script>
 
 </body>
