@@ -72,19 +72,19 @@ let particles=[];
 // ======================
 // NỔ HÌNH TRÒN NHIỀU VÒNG
 // ======================
-function explodeCircle(x,y){
-  const layers = 2 + Math.floor(rand(0,1)); // 2 lớp particle
-  for(let l=0;l<layers;l++){
-    const count = 50 + Math.floor(rand(0,20));
-    const speed = 2 + l*2 + Math.random()*2;
-    for(let i=0;i<count;i++){
-      const angle=(i/count)*Math.PI*2;
-      const vx=Math.cos(angle)*speed;
-      const vy=Math.sin(angle)*speed;
-      particles.push(new Particle(x,y,x+vx,y+vy,`hsl(${rand(0,360)},100%,60%)`,"spark",1));
+function explodeCircle(x, y){
+    const count = 80; // số particle
+    const radius = rand(50,80); // bán kính
+    for(let i=0; i<count; i++){
+        const angle = (i / count) * Math.PI * 2; // chia đều 360 độ
+        const speed = radius / 15; // vận tốc đều để tròn
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+        particles.push(new Particle(x, y, x+vx*10, y+vy*10, `hsl(${rand(0,360)},100%,60%)`, "spark", 1));
     }
-  }
 }
+
+
 
 // ======================
 // BẮN ROCKET
