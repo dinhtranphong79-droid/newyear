@@ -17,76 +17,97 @@ canvas { display:block; width:100%; height:100%; }
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
-let W, H;
-function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+let W,H;
+function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
 resize();
 window.addEventListener("resize", resize);
 
 const rand = (a,b)=>Math.random()*(b-a)+a;
 
 // ======================
-// PARTICLE CHO CHỮ
+// PARTICLE CHO CHỮ VÀ NỔ PHÁO HOA
 // ======================
-class Particle {
-  constructor(x, y, tx, ty, color){
-    this.x = x;
-    this.y = y;
-    this.tx = tx;
-    this.ty = ty;
-    this.vx = rand(-2,2);
-    this.vy = rand(-12,-9);
-    this.color = color;
-    this.life = 0;
+class Particle{
+  constructor(x,y,tx,ty,color,type="spark"){
+    this.x=x; this.y=y;
+    this.tx=tx; this.ty=ty;
+    this.vx=rand(-2,2);
+    this.vy=rand(-12,-9);
+    this.color=color;
+    this.life=0;
+    this.type=type; // "rocket" | "spark" | "text"
   }
   update(){
     this.life++;
-    if(this.life < 30){
+    if(this.type==="rocket"){
       this.y += this.vy;
+      this.vy += 0.15;
+      if(this.y<=this.ty){ // nổ
+        explode(this.x,this.y);
+        this.life=200; // đánh dấu xóa
+      }
+    } else if(this.type==="spark"){
       this.x += this.vx;
-    } else {
+      this.y += this.vy;
+      this.vy += 0.05;
+      this.size = this.size ? this.size*0.96 : 2;
+    } else if(this.type==="text"){
       this.x += (this.tx - this.x)*0.08;
       this.y += (this.ty - this.y)*0.08;
     }
   }
   draw(ctx){
-    ctx.fillStyle = this.color;
-    ctx.fillRect(this.x, this.y, 2, 2);
+    ctx.fillStyle=this.color;
+    ctx.fillRect(this.x,this.y,this.size||2,this.size||2);
+  }
+}
+
+let particles=[];
+
+// ======================
+// NỔ PHÁO HOA
+// ======================
+function explode(x,y){
+  const count = 60 + Math.floor(rand(0,20));
+  for(let i=0;i<count;i++){
+    const angle=(i/count)*Math.PI*2;
+    const vx=Math.cos(angle)*rand(2,6);
+    const vy=Math.sin(angle)*rand(2,6);
+    particles.push(new Particle(x,y,x+vx,y+vy,`hsl(${rand(0,360)},100%,60%)`,"spark"));
   }
 }
 
 // ======================
-// PHÁO HOA BAN ĐẦU DÀY ĐẶC
+// BẮN PHÁO HOA DÀY ĐẶC
 // ======================
-let fireworks = [];
-function launchInitialFireworks(){
-  for(let i=0;i<6;i++){
-    const x = rand(W*0.1,W*0.9);
-    const y = H+50;
-    const peakY = rand(H*0.2,H*0.6);
-    fireworks.push({x,y,vy:rand(-7,-10),peakY,type:"circle"});
+function launchRockets(){
+  const rocketCount=6;
+  for(let i=0;i<rocketCount;i++){
+    const x=rand(W*0.1,W*0.9);
+    const y=H+50;
+    const peakY=rand(H*0.2,H*0.6);
+    particles.push(new Particle(x,y,x,peakY,`hsl(${rand(0,360)},100%,60%)`,"rocket"));
   }
 }
 
 // ======================
-// TẠO PARTICLE CHO CHỮ
+// TẠO CHỮ 2 HÀNG TỪ PHÁO HOA
 // ======================
-function createTextParticles(text, yRatio, size){
+function createTextParticles(text,yRatio,size){
   const off = document.createElement("canvas");
   const octx = off.getContext("2d");
-  off.width = W; off.height = H;
-
-  octx.fillStyle = "#fff";
-  octx.textAlign = "center";
-  octx.textBaseline = "middle";
-  octx.font = `900 ${size}px Arial`;
+  off.width=W; off.height=H;
+  octx.fillStyle="#fff";
+  octx.textAlign="center";
+  octx.textBaseline="middle";
+  octx.font=`900 ${size}px Arial`;
   octx.fillText(text,W/2,H*yRatio);
-
   const img = octx.getImageData(0,0,W,H).data;
   for(let y=0;y<H;y+=6){
     for(let x=0;x<W;x+=6){
-      const i = (y*W+x)*4;
+      const i=(y*W+x)*4;
       if(img[i+3]>150){
-        fireworks.push(new Particle(x,H+rand(50,200),x,y,`hsl(${rand(0,360)},100%,60%)`));
+        particles.push(new Particle(x,H+rand(50,200),x,y,`hsl(${rand(0,360)},100%,60%)`,"text"));
       }
     }
   }
@@ -96,41 +117,23 @@ function createTextParticles(text, yRatio, size){
 // ANIMATE LOOP
 // ======================
 function animate(){
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fillStyle="rgba(0,0,0,0.25)";
   ctx.fillRect(0,0,W,H);
-
-  for(let i=0;i<fireworks.length;i++){
-    const p = fireworks[i];
-    if(p.vy!==undefined){ // rocket ban đầu
-      p.y += p.vy;
-      p.vy += 0.15;
-      if(p.y<=p.peakY){
-        // nổ ra nhiều particle xung quanh
-        const count = 60 + Math.floor(rand(0,20));
-        for(let j=0;j<count;j++){
-          const angle = (j/count)*Math.PI*2;
-          const vx = Math.cos(angle)*rand(2,6);
-          const vy = Math.sin(angle)*rand(2,6);
-          fireworks.push(new Particle(p.x,p.y,p.x+vx,p.y+vy,`hsl(${rand(0,360)},100%,60%)`));
-        }
-        fireworks.splice(i,1);
-        i--;
-      }
-    } else {
-      p.update();
-      p.draw(ctx);
-    }
+  for(let i=0;i<particles.length;i++){
+    let p = particles[i];
+    p.update();
+    p.draw(ctx);
+    if(p.life>150 && p.type!=="text") particles.splice(i--,1);
   }
-
   requestAnimationFrame(animate);
 }
 animate();
 
 // ======================
-// PHÁO HOA BAN ĐẦU
+// LẬP LẠI ROCKET BAN ĐẦU DÀY ĐẶC
 // ======================
-let initialInterval = setInterval(launchInitialFireworks, 300);
-setTimeout(()=>{ clearInterval(initialInterval); },15000);
+let rocketInterval=setInterval(launchRockets,300);
+setTimeout(()=>{ clearInterval(rocketInterval); },15000);
 
 // ======================
 // BẮN CHỮ 2 HÀNG
