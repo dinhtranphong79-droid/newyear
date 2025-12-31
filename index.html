@@ -5,167 +5,184 @@
 <title>🎆 Happy New Year 2026</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  background: black;
-  overflow: hidden;
+html,body{
+  margin:0;
+  padding:0;
+  background:black;
+  overflow:hidden;
 }
-canvas {
-  display: block;
-}
+canvas{display:block;}
 </style>
 </head>
 <body>
 
-<canvas id="canvas"></canvas>
+<canvas id="c"></canvas>
 
 <script>
-const canvas = document.getElementById("canvas");
+const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
+function resize(){
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize",resize);
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+/* ================== UTILS ================== */
+const rand=(a,b)=>Math.random()*(b-a)+a;
+const colors=()=>`hsl(${rand(0,360)},100%,60%)`;
 
-window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
+/* ================== FIREWORK ================== */
+let fireworks=[];
+let intensity=0.015; // bắt đầu thưa
 
-/* ================= PHÁO HOA TỰ DO ================= */
-const fireworks = [];
-
-function randomFirework() {
+function launch(){
   fireworks.push({
-    x: Math.random() * canvas.width,
-    y: canvas.height,
-    vx: (Math.random() - 0.5) * 3,
-    vy: -Math.random() * 8 - 6,
-    life: 0,
-    exploded: false,
-    particles: []
+    x:rand(50,canvas.width-50),
+    y:canvas.height,
+    vx:rand(-1.5,1.5),
+    vy:-rand(10,15),
+    t:0,
+    exploded:false,
+    type:Math.floor(rand(0,4)),
+    parts:[]
   });
 }
 
-function explode(fw) {
-  for (let i = 0; i < 80; i++) {
-    fw.particles.push({
-      x: fw.x,
-      y: fw.y,
-      vx: (Math.random() - 0.5) * 6,
-      vy: (Math.random() - 0.5) * 6,
-      alpha: 1,
-      color: `hsl(${Math.random() * 360},100%,60%)`
+function explode(f){
+  let count = Math.floor(rand(60,160));
+  for(let i=0;i<count;i++){
+    let angle,speed,vx,vy;
+    if(f.type===0){ // circle
+      angle=Math.random()*Math.PI*2;
+      speed=rand(2,6);
+      vx=Math.cos(angle)*speed;
+      vy=Math.sin(angle)*speed;
+    }
+    if(f.type===1){ // star
+      angle=(Math.PI*2/5)*(i%5);
+      speed=rand(3,6);
+      vx=Math.cos(angle)*speed;
+      vy=Math.sin(angle)*speed;
+    }
+    if(f.type===2){ // spiral
+      angle=i*0.35;
+      speed=i*0.03;
+      vx=Math.cos(angle)*speed;
+      vy=Math.sin(angle)*speed;
+    }
+    if(f.type===3){ // rain
+      angle=Math.PI/2+rand(-0.4,0.4);
+      speed=rand(3,7);
+      vx=Math.cos(angle)*speed;
+      vy=Math.sin(angle)*speed;
+    }
+    f.parts.push({
+      x:f.x,y:f.y,
+      vx,vy,
+      life:rand(50,100),
+      color:colors()
     });
   }
-  fw.exploded = true;
+  f.exploded=true;
 }
 
-function updateFireworks() {
-  for (let i = fireworks.length - 1; i >= 0; i--) {
-    const fw = fireworks[i];
-    if (!fw.exploded) {
-      fw.x += fw.vx;
-      fw.y += fw.vy;
-      fw.vy += 0.15;
-      fw.life++;
-      if (fw.life > 30) explode(fw);
-    } else {
-      fw.particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.05;
-        p.alpha -= 0.015;
+function updateFireworks(){
+  for(let i=fireworks.length-1;i>=0;i--){
+    let f=fireworks[i];
+    if(!f.exploded){
+      f.x+=f.vx;
+      f.y+=f.vy;
+      f.vy+=0.25;
+      f.t++;
+      if(f.t>rand(25,45)) explode(f);
+    }else{
+      f.parts.forEach(p=>{
+        p.x+=p.vx;
+        p.y+=p.vy;
+        p.vy+=0.05;
+        p.life--;
       });
-      fw.particles = fw.particles.filter(p => p.alpha > 0);
-      if (fw.particles.length === 0) fireworks.splice(i, 1);
+      f.parts=f.parts.filter(p=>p.life>0);
+      if(!f.parts.length) fireworks.splice(i,1);
     }
   }
 }
 
-function drawFireworks() {
-  fireworks.forEach(fw => {
-    fw.particles.forEach(p => {
-      ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, p.y, 2, 2);
+function drawFireworks(){
+  fireworks.forEach(f=>{
+    f.parts.forEach(p=>{
+      ctx.fillStyle=p.color;
+      ctx.fillRect(p.x,p.y,2,2);
     });
   });
-  ctx.globalAlpha = 1;
 }
 
-/* ================= CHỮ PHÁO HOA ================= */
-let textParticles = [];
-let showText = false;
+/* ================== TEXT ================== */
+let showText=false;
+let textParts=[];
 
-function createTextParticles() {
-  const textCanvas = document.createElement("canvas");
-  const tctx = textCanvas.getContext("2d");
-  textCanvas.width = canvas.width;
-  textCanvas.height = canvas.height;
+function createText(){
+  const off=document.createElement("canvas");
+  const octx=off.getContext("2d");
+  off.width=canvas.width;
+  off.height=canvas.height;
 
-  tctx.fillStyle = "white";
-  tctx.font = "bold 90px Arial";
-  tctx.textAlign = "center";
-  tctx.textBaseline = "middle";
-  tctx.fillText("HAPPY NEW YEAR 2026", canvas.width / 2, canvas.height / 2);
+  octx.fillStyle="white";
+  octx.font="bold 90px Arial";
+  octx.textAlign="center";
+  octx.textBaseline="middle";
+  octx.fillText("HAPPY NEW YEAR 2026",canvas.width/2,canvas.height/2);
 
-  const data = tctx.getImageData(0, 0, canvas.width, canvas.height).data;
-
-  for (let y = 0; y < canvas.height; y += 6) {
-    for (let x = 0; x < canvas.width; x += 6) {
-      const i = (y * canvas.width + x) * 4;
-      if (data[i + 3] > 150) {
-        textParticles.push({
-          x: Math.random() * canvas.width,
-          y: canvas.height + Math.random() * 300,
-          tx: x,
-          ty: y,
-          vx: 0,
-          vy: 0,
-          color: `hsl(${Math.random() * 360},100%,60%)`
+  let d=octx.getImageData(0,0,off.width,off.height).data;
+  for(let y=0;y<off.height;y+=6){
+    for(let x=0;x<off.width;x+=6){
+      if(d[(y*off.width+x)*4+3]>150){
+        textParts.push({
+          x:rand(0,canvas.width),
+          y:canvas.height+rand(50,300),
+          tx:x,ty:y,
+          vx:0,vy:0,
+          color:colors()
         });
       }
     }
   }
 }
 
-function updateText() {
-  textParticles.forEach(p => {
-    p.vx += (p.tx - p.x) * 0.01;
-    p.vy += (p.ty - p.y) * 0.01;
-    p.vx *= 0.85;
-    p.vy *= 0.85;
-    p.x += p.vx;
-    p.y += p.vy;
-
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, 2, 2);
+function updateText(){
+  textParts.forEach(p=>{
+    p.vx+=(p.tx-p.x)*0.02;
+    p.vy+=(p.ty-p.y)*0.02;
+    p.vx*=0.85; p.vy*=0.85;
+    p.x+=p.vx; p.y+=p.vy;
+    ctx.fillStyle=p.color;
+    ctx.fillRect(p.x,p.y,2,2);
   });
 }
 
-/* ================= LOOP ================= */
-function animate() {
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+/* ================== LOOP ================== */
+function animate(){
+  ctx.fillStyle="rgba(0,0,0,0.25)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  if (!showText && Math.random() < 0.05) randomFirework();
+  // 📈 tăng dần độ dồn dập
+  intensity=Math.min(intensity+0.00002,0.09);
+  if(Math.random()<intensity) launch();
 
   updateFireworks();
   drawFireworks();
-
-  if (showText) updateText();
+  if(showText) updateText();
 
   requestAnimationFrame(animate);
 }
-
 animate();
 
-/* ================= SAU 15 GIÂY HIỆN CHỮ ================= */
-setTimeout(() => {
-  showText = true;
-  createTextParticles();
-}, 15000);
+/* ⏱ 15 GIÂY HIỆN CHỮ */
+setTimeout(()=>{
+  showText=true;
+  createText();
+},15000);
 </script>
 
 </body>
