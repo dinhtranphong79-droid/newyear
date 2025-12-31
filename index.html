@@ -49,17 +49,24 @@ resize();
 // ====== VẼ CHỮ ======
 function drawText() {
   ctx.save();
+
   ctx.textAlign = "center";
-  ctx.fillStyle = "white";
+  ctx.textBaseline = "middle";
 
-  ctx.font = `bold ${W * 0.09}px Arial`;
-  ctx.fillText("HAPPY NEW YEAR", W / 2, H * 0.18);
+  // Glow
+  ctx.shadowColor = "#ffcc00";
+  ctx.shadowBlur = 25;
 
-  ctx.font = `bold ${W * 0.18}px Arial`;
-  ctx.fillText("2026", W / 2, H * 0.32);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `900 ${W * 0.085}px Arial`;
+  ctx.fillText("HAPPY NEW YEAR", W / 2, H * 0.16);
+
+  ctx.font = `900 ${W * 0.2}px Arial`;
+  ctx.fillText("2026", W / 2, H * 0.3);
 
   ctx.restore();
 }
+
 
 // ====== PHÁO HOA ======
 class Firework {
@@ -146,10 +153,18 @@ let fireworks = [];
 
 // ====== LOOP ======
 function animate() {
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
-  ctx.fillRect(0, 0, W, H);
+ctx.fillStyle = "rgba(0,0,0,0.25)";
+ctx.fillRect(0, 0, W, H);
 
-  drawText();
+// 1. Vẽ pháo hoa trước
+fireworks.forEach(f => {
+  f.update();
+  f.draw();
+});
+
+// 2. Vẽ chữ SAU → chữ luôn sắc
+drawText();
+
 
   if (Math.random() < 0.06) {
     fireworks.push(new Firework());
