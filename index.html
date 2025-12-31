@@ -33,22 +33,15 @@ class Particle{
     this.tx=tx; this.ty=ty;
     this.color=color;
     this.life=0;
-    this.type=type; // rocket | spark | text
+    this.type=type; // spark | text
     this.vx=rand(-2,2)*speed;
-    this.vy=(type==="rocket")?rand(-8,-12)*speed:rand(-2,2)*speed;
+    this.vy=(type==="spark")?rand(-2,2)*speed:0;
     this.alpha=1;
     this.size=2;
   }
   update(){
     this.life++;
-    if(this.type==="rocket"){
-      this.y += this.vy;
-      this.vy += 0.15;
-      if(this.y <= this.ty){
-        explodeCircle(this.x,this.y);
-        this.life=200;
-      }
-    } else if(this.type==="spark"){
+    if(this.type==="spark"){
       this.x += this.vx;
       this.y += this.vy;
       this.vy += 0.05;
@@ -70,32 +63,28 @@ class Particle{
 let particles=[];
 
 // ======================
-// NỔ HÌNH TRÒN NHIỀU VÒNG
+// NỔ HÌNH TRÒN LỚN
 // ======================
 function explodeCircle(x, y){
-    const count = 120; // số particle
-    const radius = rand(60,90);
+    const count = 150; // số particle lớn
+    const radius = rand(100,150); // bán kính lớn
     for(let i=0;i<count;i++){
-        const angle = (i/count)*Math.PI*2; // chia đều 360 độ
-        const vx = Math.cos(angle) * rand(3,6);
-        const vy = Math.sin(angle) * rand(3,6);
+        const angle = (i/count)*Math.PI*2;
+        const vx = Math.cos(angle) * rand(radius/15,radius/10);
+        const vy = Math.sin(angle) * rand(radius/15,radius/10);
         particles.push(new Particle(x,y,x+vx*10,y+vy*10,`hsl(${rand(0,360)},100%,60%)`,"spark",1));
     }
 }
 
-
-
-
 // ======================
-// BẮN ROCKET
+// BẮN PHÁO HOA (chỉ nổ)
 // ======================
-function launchRockets(){
-  const rocketCount=6;
+function launchFireworkInstant(){
+  const rocketCount = 6;
   for(let i=0;i<rocketCount;i++){
-    const x=rand(W*0.1,W*0.9);
-    const y=H+50;
-    const peakY=rand(H*0.2,H*0.6);
-    particles.push(new Particle(x,y,x,peakY,`hsl(${rand(0,360)},100%,60%)`,"rocket",1));
+    const x = rand(W*0.1,W*0.9);
+    const y = rand(H*0.2,H*0.6); // nổ ngay ở vị trí cao
+    explodeCircle(x,y);
   }
 }
 
@@ -139,10 +128,10 @@ function animate(){
 animate();
 
 // ======================
-// LẬP LẠI ROCKET BAN ĐẦU HOÀNH TRÁNG
+// LẶP LẠI PHÁO HOA CHỈ NỔ
 // ======================
-let rocketInterval=setInterval(launchRockets,250);
-setTimeout(()=>{ clearInterval(rocketInterval); },15000);
+let fireworkInterval = setInterval(launchFireworkInstant, 300);
+setTimeout(()=>{ clearInterval(fireworkInterval); },15000);
 
 // ======================
 // BẮN CHỮ 2 HÀNG
